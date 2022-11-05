@@ -1,6 +1,6 @@
-import Structures.EmptyQueueException;
-import Structures.Queue;
-import Structures.QueueImplementation;
+import Elements.LP;
+import Elements.Order;
+import Elements.User;
 
 import java.util.*;
 
@@ -8,15 +8,16 @@ import java.util.*;
 public class ProductManagerImp implements ProductManager {
     List<Product> products;
     Queue<Order> orders;
+
     List<Order> processedOrders;
-    Hashtable<String, User> users;
+    HashMap<String, User> users;
 
 
     public ProductManagerImp(){
         this.products=new ArrayList<>();
-        this.orders=new QueueImplementation<Order>();
+        this.orders=new LinkedList<Order>();
         this.processedOrders=new ArrayList<>();
-        this.users=new Hashtable<>();
+        this.users=new HashMap<>();
 
     }
 
@@ -28,35 +29,47 @@ public class ProductManagerImp implements ProductManager {
 
     @Override
     public List<Product> productsBySales() {
-        this.products.sort((p1,p2)->Integer.compare(p2.getSales(), p1.getSales()));
+        this.products.sort((p1,p2)->Double.compare(p1.getNumSales(), p2.getNumSales()));
         return products;
     }
 
     @Override
     public void addOrder(Order o){
-        orders.push(o);
+        orders.add(o);
     }
 
     @Override
-    public Order processOrder() throws EmptyQueueException {
-        Order orderPopped=orders.pop();
+    public Order processOrder() {
+        Order orderPopped=orders.poll();
         processedOrders.add(orderPopped);
-        Product newSale =this.getProduct(orderPopped.product.productId);
-        newSale.setSales(orderPopped.cuantity);
+        assert orderPopped != null;
+        User userMadeOrder = users.get(orderPopped.idUser);
+        userMadeOrder.orderList.add(orderPopped);
+        List<LP> processedLP=orderPopped.getLinesOfProducts();
+        for (LP lp : processedLP) {
+            boolean found = false;
+            int j = 0;
+            while (!found && j < products.size()) {
+                if (Objects.equals(lp.getIDLP(), products.get(j).productId)) {
+                    products.get(j).setSales(lp.getCuantity());
+                    found = true;
+                } else {
+                    j++;
+                }
+            }
+        }
         return orderPopped;
+
+
     }
 
 
     @Override
     public List<Order> ordersByUser(String userId) {
         List<Order> ordersOfUser = new ArrayList<>();
-        for(int i=0; i<processedOrders.size();i++){
-            if(Objects.equals(processedOrders.get(i).user.userId, userId)){
-                ordersOfUser.add(processedOrders.get(i));
-            }
-        }
+        User user=users.get(userId);
+        ordersOfUser=user.orderList;
         return ordersOfUser;
-
     }
 
     @Override
@@ -76,7 +89,7 @@ public class ProductManagerImp implements ProductManager {
         int i =0;
         boolean found=false;
         while(!found && i<this.products.size()){
-            if(Objects.equals(this.products.get(i).getProductID(), productId)){
+            if(Objects.equals(this.products.get(i).getProductId(), productId)){
                 found=true;
             }
             else{
@@ -103,7 +116,7 @@ public class ProductManagerImp implements ProductManager {
 
     @Override
     public int numSales(String b001) {
-        return(this.getProduct(b001).getSales());
+        return(this.getProduct(b001).getNumSales());
     }
     @Override
     public User getUser(String id){

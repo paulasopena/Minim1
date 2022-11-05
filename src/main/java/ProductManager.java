@@ -1,8 +1,5 @@
-
-
-
-
-import Structures.EmptyQueueException;
+import Elements.Order;
+import Elements.User;
 
 import java.util.List;
 
@@ -11,7 +8,7 @@ public interface ProductManager {
     public List<Product> productsBySales();
     public void addOrder(Order order);
 
-    public Order processOrder() throws EmptyQueueException;
+    public Order processOrder();
 
 
 
